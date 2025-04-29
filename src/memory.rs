@@ -17,20 +17,27 @@ impl VulnerableBuffer {
         Self { data, size }
     }
 
-    pub fn write(&mut self, input: &[u8]) {
-        // 취약점: 버퍼 오버플로우 가능
+    pub fn write(&mut self, input: &[u8]) -> Result<(), &'static str> {
+        if input.len() > self.size {
+            return Err("Input size exceeds buffer capacity");
+        }
+        
         unsafe {
             ptr::copy_nonoverlapping(input.as_ptr(), self.data, input.len());
         }
+        Ok(())
     }
 
-    pub fn read(&self, len: usize) -> Vec<u8> {
-        // 취약점: 범위 검증 없음
+    pub fn read(&self, len: usize) -> Result<Vec<u8>, &'static str> {
+        if len > self.size {
+            return Err("Requested read length exceeds buffer size");
+        }
+        
         unsafe {
             let mut result = Vec::with_capacity(len);
             ptr::copy_nonoverlapping(self.data, result.as_mut_ptr(), len);
             result.set_len(len);
-            result
+            Ok(result)
         }
     }
 
